@@ -15,15 +15,23 @@ info:
 		"CONTAINER_NAME  = $(CONTAINER_NAME)\n"
 
 .PHONY: build
-build:
+build: export DOCKER_BUILD_EXTRA_PARAMS=--build-arg RHEL_SUB_USER=$(RHEL_SUB_USER) \
+	--build-arg RHEL_SUB_PASSWD=$(RHEL_SUB_PASSWD)
+build: _build
+
+.PHONY: build-entitlements
+build-entitlements: export DOCKER_BUILD_EXTRA_PARAMS=-f Dockerfile.entitlements
+build-entitlements: $(PROJECT_PATH)/rhel-entitlements.tar.gz _build
+
+.PHONY: _build
+_build:
 	docker history -q $(IMAGE_NAME) 2> /dev/null >&2 || \
 		$(MAKE) build_image
 
 .PHONY: build_image
 build_image: info
 	docker build -t $(IMAGE_NAME) \
-		--build-arg RHEL_SUB_USER=$(RHEL_SUB_USER) \
-		--build-arg RHEL_SUB_PASSWD=$(RHEL_SUB_PASSWD) \
+		$(DOCKER_BUILD_EXTRA_PARAMS) \
 		$(PROJECT_PATH)
 
 .PHONY: run
